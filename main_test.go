@@ -7,18 +7,12 @@ import (
 	"net/http/httptest"
 	"sort"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 //unit test to check add function (takes transaction, updates sorted transaction array and balance map)
 func TestAddPoints(t *testing.T) {
-
-	add(Transaction{"payer1", 0, time.Now().Format(time.RFC3339)})
-	if len(sortedTransactions) != 0 || len(Balances) != 0 {
-		t.Error("Add function shouldn't accept transactions with 0 points")
-	}
 	var testTransactions [5]Transaction = [5]Transaction{
 		{"DANNON", 1000, "2020-11-02T14:00:00Z"},
 		{"UNILEVER", 200, "2020-10-31T11:00:00Z"},
@@ -28,12 +22,10 @@ func TestAddPoints(t *testing.T) {
 	for tnsactn := range testTransactions {
 		add(testTransactions[tnsactn])
 		if len(sortedTransactions) != (tnsactn + 1) {
-			t.Error("Add function not accepting valid transactions")
+			t.Errorf("Add function not accepting valid transactions: %d", len(sortedTransactions))
 		}
-
 	}
 	sort.Sort(sortedTransactions)
-
 }
 
 //unit test to check deductTransactions function (takes point value, returns list of deductions in the form {"payer": _, "points": _})
@@ -52,7 +44,6 @@ func TestSpendPoints(t *testing.T) {
 			t.Errorf("deductTransactions function not taking proper points from \"MILLER COORS\": %d", balancesList[balance].Points)
 		}
 	}
-
 }
 
 //unit test to check the getBalances function (takes no input, returns the balance map)
@@ -78,6 +69,26 @@ func cleanTests() {
 	}
 }
 
+func TestAddPointsHTTP(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+	r.POST("/add", addTransaction)
+	badTransaction := Transaction{"TESLA", int(0), "2020-11-01T14:00:00Z"}
+	postBody, _ := json.Marshal(badTransaction)
+	reqBody := bytes.NewBuffer(postBody)
+	req, err := http.NewRequest("POST", "http://localhost:8080/add", reqBody)
+	if err != nil {
+		t.Errorf("Failed to create mock HTTP add request: %s" + err.Error())
+	}
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Error("Failed add route")
+	}
+	t.Cleanup(cleanTests)
+}
+
 //route test to check if the /spend route is working as intended with valid input
 func TestSpendPointsHTTPValid(t *testing.T) {
 	TestAddPoints(t)
@@ -94,9 +105,7 @@ func TestSpendPointsHTTPValid(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-
 	r.ServeHTTP(w, req)
-
 	if w.Code != http.StatusOK {
 		t.Error("Failed spend route")
 	}
@@ -119,9 +128,7 @@ func TestSpendPointsHTTPInvalid(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-
 	r.ServeHTTP(w, req)
-
 	if w.Code != http.StatusBadRequest {
 		t.Error("Failed to reject invalid spend request (more points than available)")
 	}
@@ -138,12 +145,9 @@ func TestGetPointsHTTP(t *testing.T) {
 		t.Errorf("Failed to create mock HTTP points request: %s" + err.Error())
 	}
 	w := httptest.NewRecorder()
-
 	r.ServeHTTP(w, req)
-
 	if w.Code != http.StatusOK {
 		t.Error("Failed to reject invalid spend request (spent more points than available)")
 	}
-
 	t.Cleanup(cleanTests)
 }

@@ -6,9 +6,10 @@ services:
         dockerfile: Dockerfile
     ports:
         - "8080:8080"
-    restart: unless-stopped
     networks: 
         - FetchR
+    environment: 
+        - CGO_ENABLED=0 
 networks: 
     FetchR:
         

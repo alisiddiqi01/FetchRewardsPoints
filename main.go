@@ -9,6 +9,7 @@ import (
 var router *gin.Engine
 
 func main() {
+	//starting in release mode
 	gin.SetMode(gin.ReleaseMode)
 	//setting up the router
 	router = gin.Default()

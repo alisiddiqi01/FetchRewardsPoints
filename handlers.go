@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -30,11 +29,6 @@ func addTransaction(c *gin.Context) {
 	_, err = time.Parse(time.RFC3339, transaction.Timestamp)
 	if err != nil {
 		c.AbortWithError(400, err)
-		return
-	}
-	//empty transaction doesn't change state, so it is ignored
-	if transaction.Points == 0 {
-		c.AbortWithError(400, errors.New("0 point transactions not allowed"))
 		return
 	}
 	//transaction is formatted correctly with a valid timestamp
@@ -69,5 +63,4 @@ func spendPoints(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, deductions)
-
 }

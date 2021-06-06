@@ -16,4 +16,4 @@ RUN go build -o FetchRewardsPoints .
 
 EXPOSE 8080
 
-CMD ["./FetchRewardsPoints"]
+ENTRYPOINT [ "./start.sh" ]

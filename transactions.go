@@ -13,14 +13,16 @@ type Balance struct {
 	Points int    `json:"points"`
 }
 
+//the type used to store transactions in the sorted transactions array
 type Transaction struct {
 	Payer     string `json:"payer" binding:"required"`
 	Points    int    `json:"points" binding:"required"`
-	Timestamp string `json:"timestamp" binding: "required"`
+	Timestamp string `json:"timestamp" binding:"required"`
 }
 
 type transactionArray []Transaction
 
+//implementing the necessary functions for a Transaction array to allow for sorting with built in sort
 func (th transactionArray) Len() int { return len(th) }
 
 func (th transactionArray) Less(i, j int) bool {
@@ -37,8 +39,8 @@ func (th transactionArray) Swap(i, j int) {
 //map to keep track of each payer's current points (stored in a payer:points pattern), updated upon each transaction
 var Balances map[string]int = make(map[string]int)
 
-//sorted array to keep track of transactions in order of timestamp, updated upon each transaction
-var sortedTransactions = transactionArray{}
+//sorted array to keep track of transactions in order of timestamp, updated after add and spend calls
+var sortedTransactions transactionArray
 
 //function to add a transaction to both the sorted transaction array and the balances map
 func add(a Transaction) {
@@ -53,8 +55,7 @@ func add(a Transaction) {
 	}
 }
 
-//spending points strategy:
-
+//function to spend points, takes in the desired spend amount and returns the corresponding deductions (or an error)
 func deductTransactions(p int) ([]Balance, error) {
 	//First go through transactions newest -> oldest, in order to set how many points are available
 	// at each transaction (if a future transaction is negative, then the current transaction
